@@ -26,5 +26,5 @@ labels: bug
 
 - OS:
 - Python version (`python --version`):
-- snack-stash version (`pip show snack-stash | grep Version`):
+- python-snacks version (`pip show python-snacks | grep Version`):
 - Install method: <!-- pipx / pip / editable -->

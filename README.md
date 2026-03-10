@@ -1,9 +1,9 @@
-# Snack Stash
+# python-snacks
 
 A personal CLI tool for managing a local stash of reusable Python code snippets. Browse, copy, and curate snippets across projects with a single command.
 
 ```bash
-pipx install snack-stash
+pipx install python-snacks
 snack stash create default ~/snack-stash
 snack unpack auth/google_oauth.py
 ```
@@ -14,15 +14,21 @@ snack unpack auth/google_oauth.py
 
 **Recommended (pipx):**
 ```bash
-pipx install snack-stash
+pipx install python-snacks
 ```
 
 **Alternative (pip):**
 ```bash
-pip install snack-stash
+pip install python-snacks
 ```
 
 Requires Python 3.10+.
+
+**Updating:**
+```bash
+pipx upgrade python-snacks   # if installed with pipx
+pip install --upgrade python-snacks  # if installed with pip
+```
 
 ---
 
