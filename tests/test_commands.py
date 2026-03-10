@@ -19,6 +19,9 @@ def stash(tmp_path_factory):
     (d / "auth" / "jwt_helpers.py").write_text("# jwt\n")
     (d / "forms").mkdir()
     (d / "forms" / "contact_form.py").write_text("# contact\n")
+    (d / ".snack_index").write_text(
+        "auth/google_oauth.py\nauth/jwt_helpers.py\nforms/contact_form.py\n"
+    )
     return d
 
 
@@ -74,6 +77,22 @@ def test_list_empty_category(stash_env):
     result = runner.invoke(app, ["list", "nonexistent"], env=stash_env)
     assert result.exit_code == 0
     assert "No snippets found" in result.output
+
+
+def test_list_excludes_non_snack_files(stash, stash_env):
+    """Files present in the stash directory but not tracked in .snack_index are excluded."""
+    # Drop arbitrary .py files directly into the stash (not via pack)
+    (stash / "setup.py").write_text("# setup\n")
+    (stash / "some_project").mkdir()
+    (stash / "some_project" / "main.py").write_text("# project file\n")
+
+    result = runner.invoke(app, ["list"], env=stash_env)
+    assert result.exit_code == 0
+    assert "setup.py" not in result.output
+    assert "some_project/main.py" not in result.output
+    # Tracked snippets still show up
+    assert "auth/google_oauth.py" in result.output
+    assert "forms/contact_form.py" in result.output
 
 
 # ---------------------------------------------------------------------------

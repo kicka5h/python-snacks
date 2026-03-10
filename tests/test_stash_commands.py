@@ -1,5 +1,6 @@
 """Tests for `snack stash *` commands."""
 import io
+import os
 import tarfile
 import tempfile
 from pathlib import Path
@@ -7,6 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
+
+local_only = pytest.mark.skipif(os.environ.get("CI") == "true", reason="local only")
 
 import snacks.config as config_module
 from snacks.main import app
@@ -140,6 +143,49 @@ def test_stash_move_target_exists_errors(cfg_file, tmp_path):
     assert "already exists" in result.output
 
 
+# ── stash delete ─────────────────────────────────────────────────────────────
+
+def test_stash_delete_removes_from_config(cfg_file, tmp_path):
+    stash_dir = tmp_path / "my-stash"
+    runner.invoke(app, ["stash", "create", "default", str(stash_dir)], env={})
+    result = runner.invoke(app, ["stash", "delete", "default"], env={})
+    assert result.exit_code == 0, result.output
+    assert "Deleted stash 'default'" in result.output
+    assert "stash.default" not in cfg_file.read_text()
+
+
+def test_stash_delete_does_not_remove_files(cfg_file, tmp_path):
+    stash_dir = tmp_path / "my-stash"
+    runner.invoke(app, ["stash", "create", "default", str(stash_dir)], env={})
+    runner.invoke(app, ["stash", "delete", "default"], env={})
+    assert stash_dir.exists()
+
+
+def test_stash_delete_unknown_name_errors(cfg_file):
+    result = runner.invoke(app, ["stash", "delete", "nonexistent"], env={})
+    assert result.exit_code != 0
+    assert "No stash named" in result.output
+
+
+def test_stash_delete_active_promotes_next(cfg_file, tmp_path):
+    a = tmp_path / "stash-a"
+    b = tmp_path / "stash-b"
+    runner.invoke(app, ["stash", "create", "alpha", str(a)], env={})
+    runner.invoke(app, ["stash", "create", "beta", str(b), "--no-activate"], env={})
+    result = runner.invoke(app, ["stash", "delete", "alpha"], env={})
+    assert result.exit_code == 0
+    assert "beta" in result.output
+    assert "active = beta" in cfg_file.read_text()
+
+
+def test_stash_delete_last_stash_leaves_no_active(cfg_file, tmp_path):
+    stash_dir = tmp_path / "my-stash"
+    runner.invoke(app, ["stash", "create", "default", str(stash_dir)], env={})
+    result = runner.invoke(app, ["stash", "delete", "default"], env={})
+    assert result.exit_code == 0
+    assert "No stashes remaining" in result.output
+
+
 # ── stash add-remote ─────────────────────────────────────────────────────────
 
 def _make_tarball(files: dict[str, str]) -> bytes:
@@ -231,13 +277,69 @@ def test_add_remote_invalid_repo_errors(remote_stash_env):
 def test_add_remote_http_error(remote_stash_env):
     import urllib.error
     with patch("urllib.request.urlopen", side_effect=urllib.error.HTTPError(
-        url="", code=404, msg="Not Found", hdrs=None, fp=None
+        url="", code=500, msg="Internal Server Error", hdrs=None, fp=None
     )):
+        result = runner.invoke(
+            app, ["stash", "add-remote", "owner/repo"], env=remote_stash_env
+        )
+    assert result.exit_code != 0
+    assert "500" in result.output
+
+
+def test_add_remote_not_found_after_auth(remote_stash_env):
+    """Repo not found even after authentication — should report 404."""
+    import urllib.error
+    not_found = urllib.error.HTTPError(url="", code=404, msg="Not Found", hdrs=None, fp=None)
+    with patch("urllib.request.urlopen", side_effect=not_found), \
+         patch("snacks.auth._token_from_gh_cli", return_value="ghp_token"):
         result = runner.invoke(
             app, ["stash", "add-remote", "owner/missing-repo"], env=remote_stash_env
         )
     assert result.exit_code != 0
     assert "404" in result.output
+
+
+def test_add_remote_public_repo_needs_no_auth(remote_stash, remote_stash_env):
+    tarball = _make_tarball({"auth/oauth.py": "# oauth\n"})
+    mock_response = _mock_urlopen(tarball)
+    with patch("urllib.request.urlopen", return_value=mock_response) as mock_open:
+        result = runner.invoke(app, ["stash", "add-remote", "owner/repo"], env=remote_stash_env)
+    assert result.exit_code == 0
+    req = mock_open.call_args[0][0]
+    assert req.get_header("Authorization") is None
+
+
+@local_only
+def test_add_remote_private_repo_retries_with_gh_token(remote_stash, remote_stash_env):
+    """On 404, auth via gh CLI and retry."""
+    import urllib.error
+    tarball = _make_tarball({"auth/oauth.py": "# oauth\n"})
+    not_found = urllib.error.HTTPError(url="", code=404, msg="Not Found", hdrs=None, fp=None)
+    auth_response = _mock_urlopen(tarball)
+
+    with patch("urllib.request.urlopen", side_effect=[not_found, auth_response]), \
+         patch("snacks.auth._token_from_gh_cli", return_value="ghp_cli_token"):
+        result = runner.invoke(app, ["stash", "add-remote", "owner/private-repo"], env=remote_stash_env)
+
+    assert result.exit_code == 0
+    assert (remote_stash / "auth" / "oauth.py").exists()
+
+
+@local_only
+def test_add_remote_private_repo_uses_github_token_env(remote_stash, remote_stash_env):
+    """GITHUB_TOKEN env var is used without prompting."""
+    import urllib.error
+    tarball = _make_tarball({"auth/oauth.py": "# oauth\n"})
+    not_found = urllib.error.HTTPError(url="", code=404, msg="Not Found", hdrs=None, fp=None)
+    auth_response = _mock_urlopen(tarball)
+
+    env = {**remote_stash_env, "GITHUB_TOKEN": "ghp_envtoken"}
+    with patch("urllib.request.urlopen", side_effect=[not_found, auth_response]) as mock_open:
+        result = runner.invoke(app, ["stash", "add-remote", "owner/private-repo"], env=env)
+
+    assert result.exit_code == 0
+    final_req = mock_open.call_args[0][0]
+    assert final_req.get_header("Authorization") == "Bearer ghp_envtoken"
 
 
 def test_add_remote_no_py_files(remote_stash, remote_stash_env):
