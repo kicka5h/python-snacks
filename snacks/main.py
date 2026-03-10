@@ -11,6 +11,7 @@ import typer
 from snacks.config import SnackConfig, get_stash_path
 from snacks.ops import add_remote as do_add_remote
 from snacks.ops import pack as do_pack, unpack as do_unpack
+from snacks.ops import read_index
 
 app = typer.Typer(
     name="snack",
@@ -65,11 +66,7 @@ def list_snacks(
 ) -> None:
     """List all snippets in the stash."""
     stash = get_stash_path()
-    snippets = sorted(
-        p.relative_to(stash).as_posix()
-        for p in stash.rglob("*.py")
-        if not any(part.startswith(("_", ".")) for part in p.relative_to(stash).parts)
-    )
+    snippets = sorted(read_index(stash))
     if category:
         snippets = [s for s in snippets if s.startswith(f"{category}/")]
     typer.echo("\n".join(snippets) if snippets else "No snippets found.")
@@ -82,10 +79,8 @@ def search(
     """Search snippet filenames for a keyword."""
     stash = get_stash_path()
     matches = sorted(
-        p.relative_to(stash).as_posix()
-        for p in stash.rglob("*.py")
-        if keyword.lower() in p.name.lower()
-        and not any(part.startswith(("_", ".")) for part in p.relative_to(stash).parts)
+        s for s in read_index(stash)
+        if keyword.lower() in Path(s).name.lower()
     )
     typer.echo("\n".join(matches) if matches else f"No snippets matching '{keyword}'.")
 
@@ -177,6 +172,37 @@ def stash_move(
 
     cfg.set_stash(name, expanded_new)
     cfg.save()
+
+
+@stash_app.command("delete")
+def stash_delete(
+    name: str = typer.Argument(..., help="Name of the stash to remove from config."),
+) -> None:
+    """Remove a stash from config (does not delete files on disk)."""
+    cfg = SnackConfig()
+    if not cfg.has_stash(name):
+        typer.echo(
+            f"[error] No stash named '{name}'. Run 'snack stash list' to see available stashes.",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    was_active = cfg.active_name() == name
+    cfg.remove_stash(name)
+
+    if was_active:
+        remaining = cfg.stashes()
+        if remaining:
+            next_name = next(iter(sorted(remaining)))
+            cfg.set_active(next_name)
+            cfg.save()
+            typer.echo(f"Deleted stash '{name}'. Active stash → '{next_name}'.")
+        else:
+            cfg.save()
+            typer.echo(f"Deleted stash '{name}'. No stashes remaining.")
+    else:
+        cfg.save()
+        typer.echo(f"Deleted stash '{name}'.")
 
 
 @stash_app.command("add-remote")
