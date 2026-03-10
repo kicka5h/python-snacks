@@ -21,7 +21,7 @@ app = typer.Typer(
 
 def _version_callback(value: bool) -> None:
     if value:
-        version = importlib.metadata.version("snack-stash")
+        version = importlib.metadata.version("python-snacks")
         typer.echo(f"snack-stash v{version}")
         raise typer.Exit()
 
