@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "snack-stash"
-version = "0.1.0"
+version = "0.0.1"
 description = "A CLI tool for managing a personal stash of reusable Python code snippets."
 requires-python = ">=3.10"
 dependencies = [
