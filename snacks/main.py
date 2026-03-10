@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.metadata
 import os
 import shutil
 from pathlib import Path
@@ -16,6 +17,22 @@ app = typer.Typer(
     help="Manage your personal snack stash of reusable Python snippets.",
     no_args_is_help=True,
 )
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        version = importlib.metadata.version("snack-stash")
+        typer.echo(f"snack-stash v{version}")
+        raise typer.Exit()
+
+
+@app.callback()
+def _main(
+    version: Optional[bool] = typer.Option(
+        None, "--version", callback=_version_callback, is_eager=True, help="Show version and exit."
+    ),
+) -> None:
+    pass
 
 stash_app = typer.Typer(help="Manage stash directories.")
 app.add_typer(stash_app, name="stash")
