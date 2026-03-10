@@ -1,5 +1,6 @@
 """Tests for `snack stash *` commands."""
 import io
+import os
 import tarfile
 import tempfile
 from pathlib import Path
@@ -7,6 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
+
+local_only = pytest.mark.skipif(os.environ.get("CI") == "true", reason="local only")
 
 import snacks.config as config_module
 from snacks.main import app
@@ -274,8 +277,21 @@ def test_add_remote_invalid_repo_errors(remote_stash_env):
 def test_add_remote_http_error(remote_stash_env):
     import urllib.error
     with patch("urllib.request.urlopen", side_effect=urllib.error.HTTPError(
-        url="", code=404, msg="Not Found", hdrs=None, fp=None
+        url="", code=500, msg="Internal Server Error", hdrs=None, fp=None
     )):
+        result = runner.invoke(
+            app, ["stash", "add-remote", "owner/repo"], env=remote_stash_env
+        )
+    assert result.exit_code != 0
+    assert "500" in result.output
+
+
+def test_add_remote_not_found_after_auth(remote_stash_env):
+    """Repo not found even after authentication — should report 404."""
+    import urllib.error
+    not_found = urllib.error.HTTPError(url="", code=404, msg="Not Found", hdrs=None, fp=None)
+    with patch("urllib.request.urlopen", side_effect=not_found), \
+         patch("snacks.auth._token_from_gh_cli", return_value="ghp_token"):
         result = runner.invoke(
             app, ["stash", "add-remote", "owner/missing-repo"], env=remote_stash_env
         )
@@ -293,6 +309,7 @@ def test_add_remote_public_repo_needs_no_auth(remote_stash, remote_stash_env):
     assert req.get_header("Authorization") is None
 
 
+@local_only
 def test_add_remote_private_repo_retries_with_gh_token(remote_stash, remote_stash_env):
     """On 404, auth via gh CLI and retry."""
     import urllib.error
@@ -308,6 +325,7 @@ def test_add_remote_private_repo_retries_with_gh_token(remote_stash, remote_stas
     assert (remote_stash / "auth" / "oauth.py").exists()
 
 
+@local_only
 def test_add_remote_private_repo_uses_github_token_env(remote_stash, remote_stash_env):
     """GITHUB_TOKEN env var is used without prompting."""
     import urllib.error
