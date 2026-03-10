@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snack-stash"
+version = "0.1.0"
+description = "A CLI tool for managing a personal stash of reusable Python code snippets."
+requires-python = ">=3.10"
+dependencies = [
+    "typer[all]>=0.9",
+]
+
+[project.scripts]
+snack = "snacks.main:app"
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["snacks*"]
