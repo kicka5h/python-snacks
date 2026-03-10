@@ -22,7 +22,7 @@ app = typer.Typer(
 def _version_callback(value: bool) -> None:
     if value:
         version = importlib.metadata.version("python-snacks")
-        typer.echo(f"snack-stash v{version}")
+        typer.echo(f"python-snacks v{version}")
         raise typer.Exit()
 
 
@@ -68,7 +68,7 @@ def list_snacks(
     snippets = sorted(
         p.relative_to(stash).as_posix()
         for p in stash.rglob("*.py")
-        if not p.name.startswith("_")
+        if not any(part.startswith(("_", ".")) for part in p.relative_to(stash).parts)
     )
     if category:
         snippets = [s for s in snippets if s.startswith(f"{category}/")]
@@ -84,7 +84,8 @@ def search(
     matches = sorted(
         p.relative_to(stash).as_posix()
         for p in stash.rglob("*.py")
-        if keyword.lower() in p.name.lower() and not p.name.startswith("_")
+        if keyword.lower() in p.name.lower()
+        and not any(part.startswith(("_", ".")) for part in p.relative_to(stash).parts)
     )
     typer.echo("\n".join(matches) if matches else f"No snippets matching '{keyword}'.")
 

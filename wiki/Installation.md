@@ -9,16 +9,16 @@
 [pipx](https://pipx.pypa.io) installs CLI tools in isolated environments so they don't conflict with your project dependencies.
 
 ```bash
-pipx install snack-stash
+pipx install python-snacks
 ```
 
 ## Alternative: pip
 
 ```bash
-pip install snack-stash
+pip install python-snacks
 ```
 
-If you want it available globally, use `pip install --user snack-stash` or install inside a virtual environment you always activate.
+If you want it available globally, use `pip install --user python-snacks` or install inside a virtual environment you always activate.
 
 ## Verify
 
@@ -44,9 +44,9 @@ Commands:
 ## Upgrading
 
 ```bash
-pipx upgrade snack-stash
+pipx upgrade python-snacks
 # or
-pip install --upgrade snack-stash
+pip install --upgrade python-snacks
 ```
 
 New versions are published to PyPI automatically when a `v*` tag is pushed to the repository.
