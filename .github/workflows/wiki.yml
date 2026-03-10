@@ -1,0 +1,29 @@
+name: Publish Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wiki/**"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Push wiki to GitHub Wiki
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Push wiki files
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki-repo
+          cp wiki/*.md wiki-repo/
+          cd wiki-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "sync wiki from main (${GITHUB_SHA::7})"
+          git push
