@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-snacks"
-version = "0.2.0"
+version = "0.2.1"
 description = "A CLI tool for managing a personal stash of reusable Python code snippets."
 readme = "README.md"
 requires-python = ">=3.10"
