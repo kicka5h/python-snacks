@@ -3,9 +3,10 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "snack-stash"
-version = "0.0.1"
+name = "python-snacks"
+version = "0.1.2"
 description = "A CLI tool for managing a personal stash of reusable Python code snippets."
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "typer[all]>=0.9",
