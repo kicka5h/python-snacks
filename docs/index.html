@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>python-snacks Wiki</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <style>
+    :root {
+      --sidebar-width: 260px;
+      --color-bg: #ffffff;
+      --color-sidebar-bg: #f6f8fa;
+      --color-border: #d1d9e0;
+      --color-text: #1f2328;
+      --color-text-secondary: #656d76;
+      --color-link: #0969da;
+      --color-link-hover: #0550ae;
+      --color-active-bg: #ddf4ff;
+      --color-active-border: #0969da;
+      --color-code-bg: #f6f8fa;
+      --color-header-bg: #24292f;
+      --color-header-text: #ffffff;
+      --color-inline-code-bg: rgba(175, 184, 193, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--color-text);
+      background: var(--color-bg);
+    }
+
+    /* Header */
+    .site-header {
+      background: var(--color-header-bg);
+      color: var(--color-header-text);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 56px;
+    }
+
+    .site-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .site-header .badge {
+      font-size: 12px;
+      background: rgba(255,255,255,0.15);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 400;
+    }
+
+    .site-header nav {
+      margin-left: auto;
+      display: flex;
+      gap: 16px;
+    }
+
+    .site-header nav a {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .site-header nav a:hover {
+      color: #ffffff;
+    }
+
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    /* Layout */
+    .layout {
+      display: flex;
+      margin-top: 56px;
+      min-height: calc(100vh - 56px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--color-sidebar-bg);
+      border-right: 1px solid var(--color-border);
+      padding: 16px 0;
+      position: fixed;
+      top: 56px;
+      bottom: 0;
+      overflow-y: auto;
+      z-index: 50;
+    }
+
+    .sidebar-section {
+      padding: 0 16px;
+      margin-bottom: 16px;
+    }
+
+    .sidebar-section h3 {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--color-text-secondary);
+      padding: 4px 0;
+      margin-bottom: 4px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 6px 12px;
+      color: var(--color-text);
+      text-decoration: none;
+      font-size: 14px;
+      border-radius: 6px;
+      border-left: 3px solid transparent;
+      margin: 1px 0;
+    }
+
+    .sidebar a:hover {
+      background: rgba(0,0,0,0.04);
+    }
+
+    .sidebar a.active {
+      background: var(--color-active-bg);
+      border-left-color: var(--color-active-border);
+      font-weight: 600;
+      color: var(--color-link);
+    }
+
+    /* Content */
+    .content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      max-width: 900px;
+      padding: 32px 48px;
+    }
+
+    .content .loading {
+      color: var(--color-text-secondary);
+      padding: 48px 0;
+      text-align: center;
+    }
+
+    /* Markdown content styles */
+    .content h1 {
+      font-size: 32px;
+      font-weight: 600;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 16px;
+    }
+
+    .content h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .content h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+
+    .content h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+
+    .content p {
+      margin-bottom: 16px;
+    }
+
+    .content a {
+      color: var(--color-link);
+      text-decoration: none;
+    }
+
+    .content a:hover {
+      text-decoration: underline;
+    }
+
+    .content ul, .content ol {
+      margin-bottom: 16px;
+      padding-left: 2em;
+    }
+
+    .content li {
+      margin-bottom: 4px;
+    }
+
+    .content li + li {
+      margin-top: 4px;
+    }
+
+    .content code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 85%;
+      background: var(--color-inline-code-bg);
+      padding: 0.2em 0.4em;
+      border-radius: 6px;
+    }
+
+    .content pre {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--color-code-bg);
+      border-radius: 6px;
+      overflow-x: auto;
+      border: 1px solid var(--color-border);
+    }
+
+    .content pre code {
+      background: none;
+      padding: 0;
+      font-size: 85%;
+      line-height: 1.45;
+    }
+
+    .content hr {
+      border: none;
+      border-top: 1px solid var(--color-border);
+      margin: 24px 0;
+    }
+
+    .content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .content table th,
+    .content table td {
+      border: 1px solid var(--color-border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .content table th {
+      background: var(--color-sidebar-bg);
+      font-weight: 600;
+    }
+
+    .content blockquote {
+      border-left: 4px solid var(--color-border);
+      padding: 0 16px;
+      color: var(--color-text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .content strong {
+      font-weight: 600;
+    }
+
+    /* Footer */
+    .page-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border);
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page-footer a {
+      color: var(--color-link);
+      text-decoration: none;
+    }
+
+    .page-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .hamburger {
+        display: block;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .content {
+        margin-left: 0;
+        padding: 24px 16px;
+      }
+
+      .site-header nav {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <button class="hamburger" onclick="toggleSidebar()" aria-label="Toggle navigation">&#9776;</button>
+    <h1>python-snacks</h1>
+    <span class="badge">wiki</span>
+    <nav>
+      <a href="https://pypi.org/project/python-snacks/">PyPI</a>
+      <a href="https://github.com/kickash/python-snacks">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <h3>Getting Started</h3>
+        <a href="#Home" class="active">Home</a>
+        <a href="#Installation">Installation</a>
+        <a href="#Configuration">Configuration</a>
+      </div>
+      <div class="sidebar-section">
+        <h3>Usage</h3>
+        <a href="#Commands-Reference">Commands Reference</a>
+        <a href="#Writing-Good-Snippets">Writing Good Snippets</a>
+      </div>
+      <div class="sidebar-section">
+        <h3>Support</h3>
+        <a href="#Error-Reference">Error Reference</a>
+        <a href="#Contributing">Contributing</a>
+      </div>
+    </aside>
+
+    <main class="content" id="content">
+      <div class="loading">Loading...</div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ini.min.js"></script>
+  <script>
+    const PAGES = [
+      'Home',
+      'Installation',
+      'Configuration',
+      'Commands-Reference',
+      'Writing-Good-Snippets',
+      'Error-Reference',
+      'Contributing'
+    ];
+
+    const pageCache = {};
+
+    // Configure marked to use highlight.js for code blocks
+    marked.use({
+      renderer: {
+        code(token) {
+          const lang = token.lang || '';
+          const text = token.text;
+          if (lang && hljs.getLanguage(lang)) {
+            const highlighted = hljs.highlight(text, { language: lang }).value;
+            return '<pre><code class="hljs language-' + lang + '">' + highlighted + '</code></pre>';
+          }
+          const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          return '<pre><code>' + escaped + '</code></pre>';
+        },
+        // Convert [[Page]] wiki-links to hash links
+        text(token) {
+          const raw = token.raw || token.text;
+          return raw.replace(/\[\[([^\]]+)\]\]/g, function(match, page) {
+            return '<a href="#' + page + '">' + page.replace(/-/g, ' ') + '</a>';
+          });
+        }
+      }
+    });
+
+    async function loadPage(page) {
+      const contentEl = document.getElementById('content');
+
+      if (pageCache[page]) {
+        renderPage(page, pageCache[page]);
+        return;
+      }
+
+      contentEl.innerHTML = '<div class="loading">Loading...</div>';
+
+      try {
+        const response = await fetch('wiki/' + page + '.md');
+        if (!response.ok) throw new Error('Page not found');
+        const md = await response.text();
+        pageCache[page] = md;
+        renderPage(page, md);
+      } catch (e) {
+        contentEl.innerHTML =
+          '<h1>Page Not Found</h1>' +
+          '<p>The page <strong>' + page + '</strong> could not be loaded.</p>' +
+          '<p><a href="#Home">Return to Home</a></p>';
+      }
+    }
+
+    function renderPage(page, md) {
+      const contentEl = document.getElementById('content');
+      const html = marked.parse(md);
+      contentEl.innerHTML = html +
+        '<div class="page-footer">' +
+          '<span>Source: <a href="https://github.com/kickash/python-snacks/blob/main/wiki/' + page + '.md">' + page + '.md</a></span>' +
+          '<a href="#Home">Back to Home</a>' +
+        '</div>';
+
+      // Update active sidebar link
+      document.querySelectorAll('.sidebar a').forEach(function(a) {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + page);
+      });
+
+      // Scroll to top
+      window.scrollTo(0, 0);
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // Close sidebar on mobile when a link is clicked
+    document.getElementById('sidebar').addEventListener('click', function(e) {
+      if (e.target.tagName === 'A' && window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+    });
+
+    // Hash-based routing
+    function route() {
+      var page = location.hash.slice(1) || 'Home';
+      if (PAGES.indexOf(page) === -1) page = 'Home';
+      loadPage(page);
+    }
+
+    window.addEventListener('hashchange', route);
+
+    // Preload all pages in the background
+    function preloadPages() {
+      PAGES.forEach(function(page) {
+        if (!pageCache[page]) {
+          fetch('wiki/' + page + '.md')
+            .then(function(r) { return r.ok ? r.text() : null; })
+            .then(function(text) { if (text) pageCache[page] = text; });
+        }
+      });
+    }
+
+    // Initial load
+    route();
+    // Start preloading after a short delay
+    setTimeout(preloadPages, 500);
+  </script>
+</body>
+</html>

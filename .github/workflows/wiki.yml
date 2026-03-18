@@ -27,3 +27,12 @@ jobs:
           git add .
           git diff --cached --quiet || git commit -m "sync wiki from main (${GITHUB_SHA::7})"
           git push
+
+      - name: Sync wiki to GitHub Pages
+        run: |
+          cp wiki/*.md docs/wiki/
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/wiki/
+          git diff --cached --quiet || git commit -m "sync wiki to docs/wiki (${GITHUB_SHA::7})"
+          git push
